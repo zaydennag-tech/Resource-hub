@@ -1,4 +1,4 @@
-import { supabase } from '@/supabaseClient'
+import { supabase } from '../../../../supabaseClient'
 
 export async function POST(req) {
   const { id } = await req.json()

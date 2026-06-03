@@ -1,4 +1,4 @@
-import { supabase } from '@/supabaseClient'
+import { supabase } from '../../../supabaseClient'
 
 export async function generateMetadata({ params }) {
   const { data: doc } = await supabase
