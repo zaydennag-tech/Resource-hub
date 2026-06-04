@@ -1,11 +1,16 @@
 import { supabase } from '../../../supabaseClient'
 
+console.log("🔥 FILE LOADED")
+
 export async function generateMetadata({ params }) {
-  const { data: doc } = await supabase
+  const { data: doc, error } = await supabase
     .from('documents')
     .select('*')
     .eq('id', params.id)
     .single()
+
+  console.log("🔥 METADATA DOC:", doc)
+  console.log("METADATA ERROR:", error)
 
   return {
     title: doc?.title || 'Document',
@@ -14,31 +19,39 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function DocumentPage({ params }) {
+  console.log("🔥 PAGE IS RUNNING")
+  console.log("PARAM ID:", params.id)
+
   const { data: doc, error } = await supabase
     .from('documents')
     .select('*')
     .eq('id', params.id)
     .single()
 
+  console.log("DOC:", doc)
+  console.log("ERROR:", error)
+
   if (error || !doc) {
     return <p>Document not found</p>
   }
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'LearningResource',
-  name: doc.title,
-  educationalLevel: doc.grade,
-  about: doc.subject,
-  datePublished: doc.created_at,
-  learningResourceType: doc.type || 'Study Resource',
-  aggregateRating: doc.rating
-    ? {
-        '@type': 'AggregateRating',
-        ratingValue: doc.rating,
-        reviewCount: 1
-      }
-    : undefined
-}
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LearningResource',
+    name: doc.title,
+    educationalLevel: doc.grade,
+    about: doc.subject,
+    datePublished: doc.created_at,
+    learningResourceType: doc.type || 'Study Resource',
+    aggregateRating: doc.rating
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue: doc.rating,
+          reviewCount: 1
+        }
+      : undefined
+  }
+
   return (
     <main
       style={{
@@ -47,47 +60,37 @@ const jsonLd = {
         padding: '20px'
       }}
     >
-        <script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify(jsonLd)
-  }}
-/>
-      {/* TITLE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+        }}
+      />
+
       <h1>{doc.title}</h1>
 
-      {/* META INFO */}
       <p><strong>Subject:</strong> {doc.subject || 'N/A'}</p>
       <p><strong>Grade:</strong> {doc.grade || 'N/A'}</p>
       <p><strong>Year:</strong> {doc.year || 'N/A'}</p>
       <p><strong>Type:</strong> {doc.type || 'N/A'}</p>
 
-      {/* STATUS (for admin visibility) */}
       <p><strong>Status:</strong> {doc.status}</p>
       <p><strong>Verified:</strong> {doc.verified ? 'Yes ✅' : 'No ❌'}</p>
 
-      {/* DOWNLOAD */}
       <a
         href={`https://xfhmorhwxbirwgboqwqg.supabase.co/storage/v1/object/public/documents/${doc.file_name}`}
         target="_blank"
         rel="noopener noreferrer"
       >
-        <button
-          style={{
-            marginTop: '15px',
-            padding: '10px 15px'
-          }}
-        >
+        <button style={{ marginTop: '15px', padding: '10px 15px' }}>
           Download Document
         </button>
       </a>
 
-      {/* ⭐ RATING DISPLAY ONLY (no editing here for SEO safety) */}
       <div style={{ marginTop: '20px' }}>
         <p><strong>Rating:</strong> {doc.rating ?? 'Not rated'}</p>
       </div>
 
-      {/* 📌 SEO TEXT (VERY IMPORTANT FOR GOOGLE) */}
       <section style={{ marginTop: '30px' }}>
         <h2>About this document</h2>
         <p>
