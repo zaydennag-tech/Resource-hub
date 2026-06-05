@@ -1,8 +1,41 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../supabaseClient'
 
 export default function HomePage() {
+  const [stats, setStats] = useState({
+    documents: null,
+    verified: null,
+    ratings: null,
+  })
+
+  useEffect(() => {
+    async function fetchStats() {
+      const [{ count: documents }, { count: verified }, { count: ratings }] = await Promise.all([
+        supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('documents').select('*', { count: 'exact', head: true }).eq('verified', true),
+        supabase.from('ratings').select('*', { count: 'exact', head: true }),
+      ])
+
+      setStats({
+        documents: documents ?? 0,
+        verified: verified ?? 0,
+        ratings: ratings ?? 0,
+      })
+    }
+
+    fetchStats()
+  }, [])
+
+  function StatNumber({ value }) {
+    if (value === null) {
+      return <div className="stat-number stat-loading">—</div>
+    }
+    return <div className="stat-number">{value.toLocaleString()}</div>
+  }
+
   return (
     <>
       <style>{`
@@ -11,7 +44,6 @@ export default function HomePage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'DM Sans', sans-serif; background: #f9f9f7; color: #111; }
 
-        /* NAV */
         .nav {
           background: #fff;
           border-bottom: 1px solid #ebebeb;
@@ -45,11 +77,7 @@ export default function HomePage() {
           justify-content: center;
           font-size: 17px;
         }
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
+        .nav-links { display: flex; align-items: center; gap: 8px; }
         .nav-link {
           color: #555;
           text-decoration: none;
@@ -60,14 +88,9 @@ export default function HomePage() {
           transition: background 0.15s, color 0.15s;
         }
         .nav-link:hover { background: #f5f5f3; color: #111; }
-        .nav-cta {
-          background: #111;
-          color: #fff !important;
-          padding: 10px 20px !important;
-        }
+        .nav-cta { background: #111; color: #fff !important; padding: 10px 20px !important; }
         .nav-cta:hover { background: #333 !important; }
 
-        /* HERO */
         .hero {
           background: #fff;
           border-bottom: 1px solid #ebebeb;
@@ -151,22 +174,10 @@ export default function HomePage() {
           font-size: 14px;
           font-weight: 500;
         }
-        .hero-bullets span {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .hero-bullets span::before {
-          content: '✓';
-          color: #16a34a;
-          font-weight: 700;
-        }
+        .hero-bullets span { display: flex; align-items: center; gap: 6px; }
+        .hero-bullets span::before { content: '✓'; color: #16a34a; font-weight: 700; }
 
-        /* STATS */
-        .stats-section {
-          background: #f9f9f7;
-          padding: 60px;
-        }
+        .stats-section { background: #f9f9f7; padding: 60px; }
         .stats-grid {
           max-width: 900px;
           margin: 0 auto;
@@ -192,9 +203,16 @@ export default function HomePage() {
           line-height: 1;
           margin-bottom: 6px;
         }
+        .stat-loading {
+          color: #ddd;
+          animation: pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
         .stat-label { font-size: 13px; color: #888; font-weight: 500; }
 
-        /* FEATURES */
         .features-section {
           padding: 80px 60px;
           background: #fff;
@@ -233,10 +251,7 @@ export default function HomePage() {
           padding: 28px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
-        .feature-card:hover {
-          box-shadow: 0 6px 24px rgba(0,0,0,0.07);
-          transform: translateY(-2px);
-        }
+        .feature-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07); transform: translateY(-2px); }
         .feature-icon {
           width: 48px;
           height: 48px;
@@ -249,35 +264,18 @@ export default function HomePage() {
           font-size: 22px;
           margin-bottom: 16px;
         }
-        .feature-card h3 {
-          font-family: 'Sora', sans-serif;
-          font-size: 17px;
-          font-weight: 700;
-          color: #111;
-          margin-bottom: 8px;
-        }
+        .feature-card h3 { font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 700; color: #111; margin-bottom: 8px; }
         .feature-card p { font-size: 14px; color: #666; line-height: 1.6; }
 
-        /* HOW IT WORKS */
-        .how-section {
-          padding: 80px 60px;
-          background: #f9f9f7;
-        }
+        .how-section { padding: 80px 60px; background: #f9f9f7; }
         .steps-grid {
           max-width: 900px;
           margin: 0 auto;
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 20px;
-          position: relative;
         }
-        .step-card {
-          background: #fff;
-          border: 1.5px solid #ebebeb;
-          border-radius: 16px;
-          padding: 32px 24px;
-          text-align: center;
-        }
+        .step-card { background: #fff; border: 1.5px solid #ebebeb; border-radius: 16px; padding: 32px 24px; text-align: center; }
         .step-number {
           width: 44px;
           height: 44px;
@@ -292,29 +290,11 @@ export default function HomePage() {
           justify-content: center;
           margin: 0 auto 16px;
         }
-        .step-card h3 {
-          font-family: 'Sora', sans-serif;
-          font-size: 18px;
-          font-weight: 700;
-          margin-bottom: 8px;
-          color: #111;
-        }
+        .step-card h3 { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #111; }
         .step-card p { font-size: 14px; color: #666; line-height: 1.6; }
 
-        /* CTA */
-        .cta-section {
-          background: #111;
-          padding: 80px 60px;
-          text-align: center;
-        }
-        .cta-section h2 {
-          font-family: 'Sora', sans-serif;
-          font-size: 40px;
-          font-weight: 800;
-          color: #fff;
-          margin-bottom: 16px;
-          letter-spacing: -0.5px;
-        }
+        .cta-section { background: #111; padding: 80px 60px; text-align: center; }
+        .cta-section h2 { font-family: 'Sora', sans-serif; font-size: 40px; font-weight: 800; color: #fff; margin-bottom: 16px; letter-spacing: -0.5px; }
         .cta-section p { color: #aaa; font-size: 16px; margin-bottom: 32px; }
         .btn-white {
           background: #fff;
@@ -332,7 +312,6 @@ export default function HomePage() {
         }
         .btn-white:hover { opacity: 0.9; }
 
-        /* FOOTER */
         .footer {
           background: #fff;
           border-top: 1px solid #ebebeb;
@@ -343,20 +322,10 @@ export default function HomePage() {
           flex-wrap: wrap;
           gap: 12px;
         }
-        .footer-logo {
-          font-family: 'Sora', sans-serif;
-          font-weight: 700;
-          font-size: 16px;
-          color: #111;
-        }
+        .footer-logo { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px; color: #111; }
         .footer-copy { font-size: 13px; color: #aaa; }
         .footer-links { display: flex; gap: 20px; }
-        .footer-links a {
-          font-size: 13px;
-          color: #888;
-          text-decoration: none;
-          transition: color 0.15s;
-        }
+        .footer-links a { font-size: 13px; color: #888; text-decoration: none; transition: color 0.15s; }
         .footer-links a:hover { color: #111; }
 
         @media (max-width: 900px) {
@@ -372,7 +341,6 @@ export default function HomePage() {
       `}</style>
 
       <div>
-        {/* NAV */}
         <nav className="nav">
           <Link className="nav-logo" href="/">
             <span className="nav-logo-icon">📚</span>
@@ -384,11 +352,8 @@ export default function HomePage() {
           </div>
         </nav>
 
-        {/* HERO */}
         <section className="hero">
-          <div className="hero-badge">
-            ✦ Free educational resources for SA students
-          </div>
+          <div className="hero-badge">✦ Free educational resources for SA students</div>
           <h1>Discover, Share<br />& <span>Learn Together</span></h1>
           <p>Access past papers, study guides, assignments and educational resources shared by students and educators across South Africa.</p>
           <div className="hero-actions">
@@ -403,22 +368,22 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* STATS */}
+        {/* REAL-TIME STATS */}
         <section className="stats-section">
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">📄</div>
-              <div className="stat-number">25</div>
+              <StatNumber value={stats.documents} />
               <div className="stat-label">Documents</div>
             </div>
             <div className="stat-card">
               <div className="stat-icon">✅</div>
-              <div className="stat-number">20</div>
+              <StatNumber value={stats.verified} />
               <div className="stat-label">Verified</div>
             </div>
             <div className="stat-card">
               <div className="stat-icon">⭐</div>
-              <div className="stat-number">67</div>
+              <StatNumber value={stats.ratings} />
               <div className="stat-label">Ratings</div>
             </div>
             <div className="stat-card">
@@ -429,7 +394,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* FEATURES */}
         <section className="features-section">
           <div className="section-label">Why ResourceHub</div>
           <h2 className="section-title">Everything you need to study smarter</h2>
@@ -452,7 +416,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS */}
         <section className="how-section">
           <div className="section-label">How It Works</div>
           <h2 className="section-title">Three simple steps</h2>
@@ -475,14 +438,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* CTA */}
         <section className="cta-section">
           <h2>Ready to contribute?</h2>
           <p>Share your study materials and help thousands of students across South Africa.</p>
           <Link className="btn-white" href="/upload">Upload your first document →</Link>
         </section>
 
-        {/* FOOTER */}
         <footer className="footer">
           <span className="footer-logo">📚 ResourceHub</span>
           <span className="footer-copy">© 2026 ResourceHub. Built for students, by students.</span>
