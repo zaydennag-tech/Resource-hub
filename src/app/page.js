@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../supabaseClient'
-
+import { supabase } from '../supabaseClient'
 export default function HomePage() {
   const [stats, setStats] = useState({
     documents: null,
