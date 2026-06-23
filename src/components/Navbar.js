@@ -74,6 +74,9 @@ export default function Navbar() {
             <Link href="/upload" style={linkStyle}>Upload</Link>
             <Link href="/my-uploads" style={linkStyle}>My Uploads</Link>
             <Link href="/profile" style={linkStyle}>Profile</Link>
+            <Link href="/favorites" style={linkStyle}>
+  Favorites
+</Link>
             <button
               onClick={logout}
               style={{
