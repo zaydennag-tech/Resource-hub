@@ -1,0 +1,43 @@
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+
+export async function proxy(req) {
+  const res = NextResponse.next()
+
+  const supabase = createMiddlewareClient({
+    req,
+    res,
+  })
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const protectedRoutes = [
+    '/profile',
+    '/settings',
+    '/my-uploads',
+    '/upload',
+  ]
+
+  const isProtectedRoute = protectedRoutes.some(route =>
+    req.nextUrl.pathname.startsWith(route)
+  )
+
+  if (isProtectedRoute && !session) {
+    return NextResponse.redirect(
+      new URL('/signin', req.url)
+    )
+  }
+
+  return res
+}
+
+export const config = {
+  matcher: [
+    '/profile/:path*',
+    '/settings/:path*',
+    '/my-uploads/:path*',
+    '/upload/:path*',
+  ],
+}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../supabaseClient'
 import RatingSelect from './RatingSelect'
 import ReportButton from './ReportButton'
+import FavoriteButton from '../../components/FavoriteButton'
 
 const SUBJECTS = ['All', 'Mathematics', 'Science', 'Physics', 'Chemistry', 'Life Sciences', 'English', 'Afrikaans', 'History', 'Geography', 'Business Studies', 'Accounting']
 
@@ -529,6 +530,12 @@ export default function DocumentsPage() {
                       </div>
 
                       <div className="card-footer">
+                         <a
+                        className="download-btn"
+                        href={`/documents/${doc.id}`}
+                         >
+                        📄 View Details
+                         </a>
                         <a
                           className="download-btn"
                           href={`https://xfhmorhwxbirwgboqwqg.supabase.co/storage/v1/object/public/documents/${doc.file_name}`}
@@ -537,6 +544,7 @@ export default function DocumentsPage() {
                         >
                           📥 Download
                         </a>
+                        <FavoriteButton doc={doc} />
                         <RatingSelect doc={doc} />
                         <ReportButton doc={doc} />
                       </div>
