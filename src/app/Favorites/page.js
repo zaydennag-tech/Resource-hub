@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabaseClient'
 
 export default function FavoritesPage() {
+  const router = useRouter()
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -13,13 +15,10 @@ export default function FavoritesPage() {
 
   async function fetchFavorites() {
     setLoading(true)
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      setLoading(false)
+      router.push('/signin')
       return
     }
 
@@ -39,123 +38,123 @@ export default function FavoritesPage() {
       `)
       .eq('user_id', user.id)
 
-    if (!error && data) {
-      setFavorites(data)
-    }
-
+    if (!error && data) setFavorites(data)
     setLoading(false)
   }
 
   async function removeFavorite(id) {
-    await supabase
-      .from('favorites')
-      .delete()
-      .eq('id', id)
+    await supabase.from('favorites').delete().eq('id', id)
+    setFavorites(prev => prev.filter(f => f.id !== id))
+  }
 
-    setFavorites(prev =>
-      prev.filter(f => f.id !== id)
-    )
+  const tagStyle = {
+    fontSize: '12px', fontWeight: '500',
+    padding: '3px 10px', borderRadius: '999px',
+    background: '#f5f5f3', color: '#555', border: '1px solid #e8e8e8',
   }
 
   if (loading) {
     return (
-      <div style={{ padding: '40px' }}>
-        Loading favorites...
-      </div>
+      <main style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f3' }}>
+        <p style={{ color: '#888', fontSize: '14px' }}>Loading...</p>
+      </main>
     )
   }
 
   return (
-    <main
-      style={{
-        maxWidth: '1200px',
-        margin: '40px auto',
-        padding: '20px'
-      }}
-    >
-      <h1
-        style={{
-          fontSize: '2.5rem',
-          fontWeight: 800,
-          marginBottom: '30px'
-        }}
-      >
-        ⭐ My Favorites
-      </h1>
+    <main style={{ minHeight: '100vh', background: '#f5f5f3', padding: '48px 20px', fontFamily: 'inherit' }}>
+      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
 
-      {favorites.length === 0 ? (
-        <p>No favorite documents yet.</p>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fill,minmax(300px,1fr))',
-            gap: '20px'
-          }}
-        >
-          {favorites.map(favorite => {
-            const doc = favorite.documents
-
-            return (
-              <div
-                key={favorite.id}
-                style={{
-                  background: '#fff',
-                  border: '1px solid #ebebeb',
-                  borderRadius: '16px',
-                  padding: '20px'
-                }}
-              >
-                <h2>{doc.title}</h2>
-
-                <p>📚 {doc.subject}</p>
-
-                <p>🎓 Grade {doc.grade}</p>
-
-                <p>📅 {doc.year}</p>
-
-                <p>{doc.type}</p>
-
-                <a
-                  href={`https://xfhmorhwxbirwgboqwqg.supabase.co/storage/v1/object/public/documents/${doc.file_name}`}
-                  target="_blank"
-                  style={{
-                    display: 'block',
-                    background: '#111',
-                    color: 'white',
-                    textAlign: 'center',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    marginTop: '15px',
-                    textDecoration: 'none'
-                  }}
-                >
-                  📥 Download
-                </a>
-
-                <button
-                  onClick={() =>
-                    removeFavorite(favorite.id)
-                  }
-                  style={{
-                    width: '100%',
-                    marginTop: '10px',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: '#dc2626',
-                    color: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Remove Favorite
-                </button>
-              </div>
-            )
-          })}
+        {/* Header */}
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: '600', color: '#111', margin: 0 }}>Favourites</h1>
+          <p style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>
+            {favorites.length} saved document{favorites.length !== 1 ? 's' : ''}
+          </p>
         </div>
-      )}
+
+        {/* Empty state */}
+        {favorites.length === 0 ? (
+          <div style={{
+            background: 'white', border: '1px solid #e8e8e8',
+            borderRadius: '24px', padding: '60px 20px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: '24px', marginBottom: '12px' }}>⭐</p>
+            <p style={{ fontSize: '15px', fontWeight: '600', color: '#111', marginBottom: '6px' }}>No favourites yet</p>
+            <p style={{ fontSize: '14px', color: '#888', marginBottom: '20px' }}>Save documents from the library to find them here.</p>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                padding: '10px 20px', borderRadius: '999px',
+                border: 'none', background: '#111', color: 'white',
+                fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+              }}
+            >
+              Browse documents
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {favorites.map(favorite => {
+              const doc = favorite.documents
+              if (!doc) return null
+
+              return (
+                <div
+                  key={favorite.id}
+                  style={{
+                    background: 'white', border: '1px solid #e8e8e8',
+                    borderRadius: '20px', padding: '20px 24px',
+                  }}
+                >
+                  {/* Title */}
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#111', marginBottom: '10px' }}>
+                    {doc.title}
+                  </p>
+
+                  {/* Tags */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                    {doc.subject && <span style={tagStyle}>{doc.subject}</span>}
+                    {doc.grade && <span style={tagStyle}>Grade {doc.grade}</span>}
+                    {doc.year && <span style={tagStyle}>{doc.year}</span>}
+                    {doc.type && <span style={tagStyle}>{doc.type}</span>}
+                  </div>
+
+                  <div style={{ height: '1px', background: '#f0f0f0', marginBottom: '16px' }} />
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => removeFavorite(favorite.id)}
+                      style={{
+                        padding: '8px 16px', borderRadius: '999px',
+                        border: '1px solid #fecaca', background: 'white',
+                        color: '#ef4444', fontSize: '13px', fontWeight: '500',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Remove
+                    </button>
+                    <a
+                      href={`https://xfhmorhwxbirwgboqwqg.supabase.co/storage/v1/object/public/documents/${doc.file_name}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: '8px 16px', borderRadius: '999px',
+                        border: 'none', background: '#111', color: 'white',
+                        fontSize: '13px', fontWeight: '500',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Download
+                    </a>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </main>
   )
 }

@@ -32,6 +32,9 @@ export default function SignInPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/`,
+        queryParams: {
+        prompt: 'consent',
+      },
       },
     })
   }
