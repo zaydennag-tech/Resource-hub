@@ -1,173 +1,138 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '../../supabaseClient'
 import AdminActions from './AdminActions'
 
-export default async function AdminPage() {
-  const { data: documents, error } = await supabase
-    .from('documents')
-    .select('*')
-    .eq('status', 'pending')
-    .order('id', { ascending: false })
+export default function AdminPage() {
+  const router = useRouter()
+  const [documents, setDocuments] = useState([])
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  useEffect(() => {
+    checkAdminAndLoad()
+  }, [])
+
+  async function checkAdminAndLoad() {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      router.push('/signin')
+      return
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile?.is_admin) {
+      router.push('/')
+      return
+    }
+
+    setAuthorized(true)
+
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('status', 'pending')
+      .order('id', { ascending: false })
+
+    if (error) {
+      setError(true)
+    } else {
+      setDocuments(data)
+    }
+
+    setLoading(false)
+  }
+
+  if (loading || !authorized) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f3' }}>
+        <p style={{ color: '#888', fontSize: '14px' }}>Loading...</p>
+      </main>
+    )
+  }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', sans-serif; background: #f9f9f7; color: #111; }
+    <main style={{ minHeight: '100vh', background: '#f5f5f3', padding: '48px 20px', fontFamily: 'inherit' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
 
-        .nav {
-          background: #fff;
-          border-bottom: 1px solid #ebebeb;
-          padding: 0 40px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          height: 64px;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-        .nav-logo {
-          font-family: 'Sora', sans-serif;
-          font-weight: 800;
-          font-size: 20px;
-          color: #111;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .nav-logo-icon {
-          background: #111;
-          color: #fff;
-          width: 34px;
-          height: 34px;
-          border-radius: 9px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 17px;
-        }
-        .nav-badge {
-          background: #fef3c7;
-          color: #92400e;
-          border: 1px solid #fde68a;
-          padding: 4px 12px;
-          border-radius: 100px;
-          font-size: 12px;
-          font-weight: 600;
-        }
-
-        .page { min-height: 100vh; background: #f9f9f7; }
-
-        .header {
-          background: #fff;
-          border-bottom: 1px solid #ebebeb;
-          padding: 40px;
-        }
-        .header-inner {
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        .header h1 {
-          font-family: 'Sora', sans-serif;
-          font-size: 32px;
-          font-weight: 800;
-          color: #111;
-          margin-bottom: 6px;
-        }
-        .header p { color: #888; font-size: 15px; }
-
-        .content {
-          max-width: 900px;
-          margin: 0 auto;
-          padding: 32px 40px;
-        }
-
-        .empty-state {
-          background: #fff;
-          border: 1.5px solid #ebebeb;
-          border-radius: 16px;
-          padding: 64px 32px;
-          text-align: center;
-        }
-        .empty-icon { font-size: 48px; margin-bottom: 16px; }
-        .empty-state h3 {
-          font-family: 'Sora', sans-serif;
-          font-size: 20px;
-          font-weight: 700;
-          color: #111;
-          margin-bottom: 8px;
-        }
-        .empty-state p { color: #888; font-size: 15px; }
-
-        .queue-label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #888;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 16px;
-        }
-
-        .error-banner {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #b91c1c;
-          padding: 14px 18px;
-          border-radius: 12px;
-          font-size: 14px;
-          margin-bottom: 20px;
-        }
-
-        @media (max-width: 768px) {
-          .nav { padding: 0 20px; }
-          .header { padding: 28px 20px; }
-          .content { padding: 24px 20px; }
-        }
-      `}</style>
-
-      <div className="page">
-        <nav className="nav">
-          <a className="nav-logo" href="/">
-            <span className="nav-logo-icon">📚</span>
-            ResourceHub
-          </a>
-          <span className="nav-badge">🛠️ Admin</span>
-        </nav>
-
-        <div className="header">
-          <div className="header-inner">
-            <h1>Moderation Dashboard</h1>
-            <p>Review and approve submitted documents before they go live.</p>
+        {/* Header */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '600', color: '#111', margin: 0 }}>
+                Moderation dashboard
+              </h1>
+              <span style={{ fontSize: '12px', fontWeight: '500', padding: '3px 10px', borderRadius: '999px', background: '#111', color: 'white' }}>
+                Admin
+              </span>
+            </div>
+            <Link
+              href="/admin/users"
+              style={{
+                fontSize: '13px', fontWeight: '500', color: '#111',
+                textDecoration: 'none', padding: '8px 16px',
+                border: '1px solid #e5e5e5', borderRadius: '999px',
+                background: 'white',
+              }}
+            >
+              Manage users
+            </Link>
           </div>
+          <p style={{ fontSize: '14px', color: '#888', margin: 0 }}>
+            Review and approve submitted documents before they go live
+          </p>
         </div>
 
-        <div className="content">
-          {error && (
-            <div className="error-banner">
-              ⚠️ Error loading documents. Please refresh and try again.
-            </div>
-          )}
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: '#fef2f2', border: '1px solid #fecaca',
+            color: '#b91c1c', padding: '12px 16px',
+            borderRadius: '12px', fontSize: '13px', marginBottom: '20px',
+          }}>
+            Error loading documents. Please refresh and try again.
+          </div>
+        )}
 
-          {!error && documents?.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-icon">🎉</div>
-              <h3>All caught up!</h3>
-              <p>No pending documents to review right now.</p>
-            </div>
-          )}
+        {/* Empty state */}
+        {!error && documents.length === 0 && (
+          <div style={{
+            background: 'white', border: '1px solid #e8e8e8',
+            borderRadius: '24px', padding: '60px 20px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: '24px', marginBottom: '12px' }}>🎉</p>
+            <p style={{ fontSize: '15px', fontWeight: '600', color: '#111', marginBottom: '6px' }}>
+              All caught up!
+            </p>
+            <p style={{ fontSize: '14px', color: '#888' }}>
+              No pending documents to review right now.
+            </p>
+          </div>
+        )}
 
-          {documents && documents.length > 0 && (
-            <>
-              <p className="queue-label">{documents.length} pending review</p>
-              {documents.map((doc) => (
-                <AdminActions key={doc.id} doc={doc} />
-              ))}
-            </>
-          )}
-        </div>
+        {/* Queue */}
+        {documents.length > 0 && (
+          <>
+            <p style={{ fontSize: '12px', fontWeight: '500', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>
+              {documents.length} pending review
+            </p>
+            {documents.map((doc) => (
+              <AdminActions key={doc.id} doc={doc} />
+            ))}
+          </>
+        )}
+
       </div>
-    </>
+    </main>
   )
 }
