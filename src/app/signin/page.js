@@ -28,7 +28,12 @@ export default function SignInPage() {
   }
 
   async function googleLogin() {
-    await supabase.auth.signInWithOAuth({ provider: 'google' })
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    })
   }
 
   return (
@@ -73,7 +78,6 @@ export default function SignInPage() {
         </p>
 
         <form onSubmit={handleLogin}>
-          {/* Email */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#555', marginBottom: '6px' }}>
               Email address
@@ -92,7 +96,6 @@ export default function SignInPage() {
             />
           </div>
 
-          {/* Password */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#555', marginBottom: '6px' }}>
               Password
@@ -111,7 +114,6 @@ export default function SignInPage() {
             />
           </div>
 
-          {/* Remember me + Forgot */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', cursor: 'pointer' }}>
               <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} style={{ accentColor: '#111' }} />
@@ -136,21 +138,20 @@ export default function SignInPage() {
           </button>
         </form>
 
-        {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '1rem 0' }}>
           <div style={{ flex: 1, height: '1px', background: '#f0f0f0' }} />
           <span style={{ fontSize: '12px', color: '#aaa' }}>or</span>
           <div style={{ flex: 1, height: '1px', background: '#f0f0f0' }} />
         </div>
 
-        {/* Google */}
         <button
           onClick={googleLogin}
           style={{
             width: '100%', padding: '12px', borderRadius: '999px',
             border: '1px solid #e5e5e5', background: 'white',
             fontSize: '14px', fontWeight: '500', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '10px', color: '#111',
           }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
